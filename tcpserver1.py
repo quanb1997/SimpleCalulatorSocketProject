@@ -3,7 +3,7 @@ import sys
 
 '''CONFIGURATION'''
 LOCAL = '127.0.0.1'
-default_ip = None
+default_ip = '128.119.169.15'
 default_port = 52345
 
 operation_codes = b'+',b'-',b'*',b'/'
@@ -52,16 +52,21 @@ class ServerSocket:
 
     def recv_and_send(self):
         self.server_socket.listen(1)
-        print('>Server is listening')
+        print('>Listening to port {}'.format(self.port))
         while True:
             connection_socket, address = self.server_socket.accept()
-            print('Connection from {}'.format(address))
-            data = connection_socket.recv(1024)
-            print('{}: {}'.format(socket.gethostbyaddr(address[0])[0], data))
+            print('>Connection from {}'.format(address[0]))
+            try:
+                data = connection_socket.recv(1024)
+            except:
+                print('>{} closed the connection.\n----------------------------'.format(address[0]))
+                connection_socket.close()
+                break
+            print('{}: {}'.format(socket.gethostbyname(address[0]), data))
             data = data.split(b',')
             data = list(filter(lambda x: x != b'', data))
             try:
-                print('{}: Computing answer'.format(self.host))
+                print('>Computing answer...')
                 if len(data) > 3:
                     raise Exception
                 ans = operate(data[0],data[1],data[2])
@@ -83,14 +88,16 @@ class ServerSocket:
                 else:
                     err_code = 305
                 connection_socket.sendto('{},-1'.format(err_code).encode('utf8'), address)
-                print('{}: There was an error with the input. {}'.format(self.host, err[1]))
-                print('{}: Sent {},-1 to {}\n-------------------------'.format(self.host, err_code, socket.gethostbyaddr(address[0])[0]))
+                print('>There was an error with the input. {}'.format(err[1]))
+                print('>Sending {},-1 to {}\n-------------------------'.format(err_code, socket.gethostbyaddr(address[0])[0]))
                 continue
             ans = str(ans[0]) + ',' + str(ans[1])
             connection_socket.send(ans.encode('utf8'))
-            print('{}: Sending {}'.format(self.host,ans))
+            print('>Sending {}'.format(ans))
             connection_socket.close()
             print('--------------------------')
+
+    def close_server(self):
         self.server_socket.close()
         print('Socket Closed!\n---------------------------------')
 
@@ -99,12 +106,9 @@ class OperationError(Exception):
 
 
 if __name__ == "__main__":
-    if default_ip == None:
-        print('set the ip in the configuration')
-        input('enter anything to continue')
-        exit()
     ip = default_ip
     port = default_port
     s = ServerSocket()
     s.bind(ip,port)
-    s.recv_and_send()
+    while True:
+        s.recv_and_send()
