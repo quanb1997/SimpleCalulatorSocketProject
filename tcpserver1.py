@@ -3,7 +3,7 @@ import sys
 
 '''CONFIGURATION'''
 LOCAL = '127.0.0.1'
-default_ip = '128.119.169.15'
+default_ip = None
 default_port = 52345
 
 operation_codes = b'+',b'-',b'*',b'/'
@@ -99,6 +99,10 @@ class OperationError(Exception):
 
 
 if __name__ == "__main__":
+    if default_ip == None:
+        print('set the ip in the configuration')
+        input('enter anything to continue')
+        exit()
     ip = default_ip
     port = default_port
     s = ServerSocket()
